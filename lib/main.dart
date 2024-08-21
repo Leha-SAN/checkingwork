@@ -10,7 +10,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Проверка наличия данных пользователя
-    bool userExists = false; // Замените на реальную проверку
+    bool userExists = true; // Замените на реальную проверку
 
     return MaterialApp(
       title: 'Auth Example',
