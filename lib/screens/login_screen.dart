@@ -1,10 +1,9 @@
-// lib/screens/login_screen.dart
-
 import 'package:flutter/material.dart';
-import 'package:checkingwork/models/user.dart';
-import 'registration_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:checkingwork/services/auth_service.dart';
 import 'code_input_screen.dart';
 import 'forgot_password_screen.dart';
+import 'registration_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   final TextEditingController _userIdController = TextEditingController();
@@ -24,6 +23,7 @@ class LoginScreen extends StatelessWidget {
             TextField(
               controller: _userIdController,
               decoration: InputDecoration(labelText: 'User ID'),
+              keyboardType: TextInputType.number,
             ),
             SizedBox(height: 16),
             TextField(
@@ -34,10 +34,19 @@ class LoginScreen extends StatelessWidget {
             SizedBox(height: 32),
             ElevatedButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => CodeInputScreen()),
-                );
+                final userId = int.tryParse(_userIdController.text) ?? 0;
+                final password = _passwordController.text;
+
+                final authService = Provider.of<AuthService>(context, listen: false);
+                final loggedIn = authService.login(userId, password);
+
+                if (loggedIn) {
+                  Navigator.pushReplacementNamed(context, '/');
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Неверные учетные данные')),
+                  );
+                }
               },
               child: Text('Войти'),
             ),

@@ -4,6 +4,9 @@ import 'package:intl/intl.dart';
 import 'package:checkingwork/widgets/filtered_dropdown.dart';
 import 'package:checkingwork/providers/date_provider.dart';
 import 'package:checkingwork/models/record_model.dart';
+import 'package:checkingwork/providers/record_provider.dart';
+import 'package:checkingwork/widgets/custom_bottom_nav_bar.dart';
+import 'package:checkingwork/services/auth_service.dart';
 
 class CodeInputScreen extends StatefulWidget {
   @override
@@ -23,6 +26,19 @@ class _CodeInputScreenState extends State<CodeInputScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context, listen: false);
+
+    // Checking user autorization
+    if (!authService.isLoggedIn()) {
+      // If the user is not authorized, redirect him to the login screen
+      Future.delayed(Duration.zero, () {
+        Navigator.pushReplacementNamed(context, '/login');
+      });
+      return Scaffold(
+        body: Center(child: CircularProgressIndicator()), //Showing a loading indicator during redirection
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Code Input Screen'),
@@ -160,6 +176,7 @@ class _CodeInputScreenState extends State<CodeInputScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: CustomBottomNavBar(currentIndex: 1),
     );
   }
 }

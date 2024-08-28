@@ -1,5 +1,7 @@
-// user.dart
 class User {
+  static const int authorizedUserId = 1; //authorized user ID
+  static const String authorizedPassword = '1111'; //authorized user password
+
   final int id;
   final int userId;
   final String name;
@@ -14,7 +16,12 @@ class User {
     required this.password,
   });
 
-  // Метод для создания объекта User из JSON
+  // Method for checking authorization
+  static bool authorize(int userId, String password) {
+    return userId == authorizedUserId && password == authorizedPassword;
+  }
+
+  // Method to create a User object from JSON
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'],
@@ -25,7 +32,7 @@ class User {
     );
   }
 
-  // Метод для преобразования объекта User в JSON
+  // Method to convert User object to JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
