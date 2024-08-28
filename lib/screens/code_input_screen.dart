@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:checkingwork/widgets/filtered_dropdown.dart';
 import 'package:checkingwork/providers/date_provider.dart';
+import 'package:checkingwork/models/record_model.dart';
 
 class CodeInputScreen extends StatefulWidget {
   @override
@@ -12,6 +13,7 @@ class CodeInputScreen extends StatefulWidget {
 class _CodeInputScreenState extends State<CodeInputScreen> {
   String? selectedCategory;
   String? selectedSubcategory;
+  String? _hoursQuantity;
 
   final Map<String, List<String>> categoryMap = {
     'РГ-60': ['ПП', 'ПМ', 'ПР', 'ПВ'],
@@ -35,9 +37,6 @@ class _CodeInputScreenState extends State<CodeInputScreen> {
               children: [
                 Consumer<DateProvider>(
                   builder: (context, dateProvider, children) {
-                    // Debugging statement
-                    print("Current selectedDate: ${dateProvider.selectedDate}");
-
                     return Text(
                       dateProvider.selectedDate != null
                           ? "Selected Date: ${DateFormat('yyyy-MM-dd').format(dateProvider.selectedDate!)}"
@@ -67,6 +66,7 @@ class _CodeInputScreenState extends State<CodeInputScreen> {
           FilteredDropdown(
             options: categoryMap.keys.toList(),
             label: 'Select Category',
+            value: selectedCategory, // Passing the current value
             onChanged: (value) {
               setState(() {
                 selectedCategory = value;
@@ -79,6 +79,7 @@ class _CodeInputScreenState extends State<CodeInputScreen> {
             FilteredDropdown(
               options: categoryMap[selectedCategory] ?? [],
               label: 'Select Subcategory',
+              value: selectedSubcategory, // Passing the current value
               onChanged: (value) {
                 setState(() {
                   selectedSubcategory = value;
@@ -94,6 +95,10 @@ class _CodeInputScreenState extends State<CodeInputScreen> {
                 labelText: 'Enter hours quantity',
                 border: OutlineInputBorder(),
               ),
+              onChanged: (value) {
+                _hoursQuantity = value;
+              },
+              controller: TextEditingController(text: _hoursQuantity), // Ensure the field updates correctly
             ),
           ),
           // "Save" button
@@ -105,13 +110,52 @@ class _CodeInputScreenState extends State<CodeInputScreen> {
 
                 if (selectedCategory != null &&
                     selectedSubcategory != null &&
-                    selectedDate != null) {
-                  print("Записано: $selectedDate, $selectedCategory, $selectedSubcategory");
+                    selectedDate != null &&
+                    _hoursQuantity != null && _hoursQuantity!.isNotEmpty) {
+                  final newRecord = RecordModel(
+                    category: selectedCategory!,
+                    subcategory: selectedSubcategory!,
+                    date: selectedDate,
+                    hoursQuantity: _hoursQuantity!,
+                  );
+
+                  Provider.of<RecordProvider>(context, listen: false).addRecord(newRecord);
+
+                  // Очистка полей после записи
+                  setState(() {
+                    selectedCategory = null;
+                    selectedSubcategory = null;
+                    _hoursQuantity = '';
+                  });
+
+                  print("Записано: $newRecord");
                 } else {
                   print("Пожалуйста, заполните все поля.");
                 }
               },
               child: Text('Записать'),
+            ),
+          ),
+          // Display records in a table
+          Expanded(
+            child: Consumer2<DateProvider, RecordProvider>(
+              builder: (context, dateProvider, recordProvider, child) {
+                DateTime? selectedDate = dateProvider.selectedDate;
+                List<RecordModel> recordsForDate = selectedDate != null
+                    ? recordProvider.getRecordsForDate(selectedDate)
+                    : [];
+
+                return ListView.builder(
+                  itemCount: recordsForDate.length,
+                  itemBuilder: (context, index) {
+                    RecordModel record = recordsForDate[index];
+                    return ListTile(
+                      title: Text('${record.category} - ${record.subcategory}'),
+                      subtitle: Text('Hours: ${record.hoursQuantity}'),
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],
