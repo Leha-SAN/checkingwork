@@ -137,7 +137,7 @@ class _CodeInputScreenState extends State<CodeInputScreen> {
 
                   Provider.of<RecordProvider>(context, listen: false).addRecord(newRecord);
 
-                  // Очистка полей после записи
+                  // Clearing fields after recording
                   setState(() {
                     selectedCategory = null;
                     selectedSubcategory = null;

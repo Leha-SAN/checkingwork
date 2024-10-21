@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart'; // Import GoRouter for navigation
 import 'package:provider/provider.dart';
 import 'package:checkingwork/services/auth_service.dart';
-import 'code_input_screen.dart';
 import 'forgot_password_screen.dart';
 import 'registration_screen.dart';
 
@@ -33,15 +33,21 @@ class LoginScreen extends StatelessWidget {
             ),
             SizedBox(height: 32),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 final userId = int.tryParse(_userIdController.text) ?? 0;
                 final password = _passwordController.text;
 
                 final authService = Provider.of<AuthService>(context, listen: false);
-                final loggedIn = authService.login(userId, password);
+
+                // Add output to check code execution
+                print('Attempting to login with User ID: $userId and Password: $password');
+
+                // Waiting for Future to complete
+                final loggedIn = await authService.login(userId, password);
 
                 if (loggedIn) {
-                  Navigator.pushReplacementNamed(context, '/');
+                  // Using GoRouter for navigation
+                  context.go('/');
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Неверные учетные данные')),
@@ -52,19 +58,15 @@ class LoginScreen extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ForgotPasswordScreen()),
-                );
+                // Navigating to the password recovery screen
+                context.go('/forgot_password');
               },
               child: Text('Забыли пароль?'),
             ),
             TextButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => RegistrationScreen()),
-                );
+                //Navigating to the registration screen
+                context.go('/registration');
               },
               child: Text('Зарегистрироваться'),
             ),

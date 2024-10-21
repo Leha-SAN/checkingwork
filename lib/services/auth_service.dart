@@ -1,37 +1,66 @@
 import 'package:flutter/material.dart';
-import 'package:checkingwork/models/user.dart'; // Importing the User model
+import 'package:checkingwork/models/user.dart';
+import 'package:http/http.dart' as http;
+import 'package:checkingwork/database/database_helper.dart';
+import 'dart:convert';
 
-class AuthService extends ChangeNotifier { //Inheritance from ChangeNotifier
+class AuthService extends ChangeNotifier {
   User? _authenticatedUser;
 
-  // Method for user authorization
-  bool login(int userId, String password) {
-    if (User.authorize(userId, password)) {
-      _authenticatedUser = User(
-        id: 1, // This value can be replaced with more complex ID retrieval logic
-        userId: userId,
-        name: 'Default User', // Here you can substitute the name of the authorized user
-        authkey: 'someAuthKey',
-        password: password,
+  Future<bool> login(int userId, String password) async {
+    final String apiUrl = 'https://time.milesta.ru/api/site/index';
+    String basicAuth = 'Basic ' + base64Encode(utf8.encode('$userId:$password'));
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+          'Authorization': basicAuth,
+        },
       );
-      notifyListeners(); // We notify listeners about the change
-      return true;
-    } else {
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        int id = int.tryParse(responseData['id'].toString()) ?? 0; // Casting to int with checking
+        int userIdFromResponse = int.tryParse(responseData['username'].toString()) ?? userId; // Casting to int with checking
+
+        _authenticatedUser = User(
+          id: id,
+          userId: userIdFromResponse,
+          authkey: responseData['auth_key'] ?? '',
+          password: password,
+        );
+
+        await saveUserToDatabase(_authenticatedUser!);
+        notifyListeners();
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      print('Ошибка при авторизации: $error');
       return false;
     }
   }
 
-  // Method for user exit
   void logout() {
     _authenticatedUser = null;
-    notifyListeners(); // Уведомляем слушателей об изменении
+    notifyListeners();
   }
 
-  // Checking if the user is authorized
   bool isLoggedIn() {
     return _authenticatedUser != null;
   }
 
-  // Getting information about the current user
+  Future<void> saveUserToDatabase(User user) async {
+    // Implementing a method to save a user to a database
+    final dbHelper = DatabaseHelper();
+    await dbHelper.insertUser(user);
+  }
+
   User? get currentUser => _authenticatedUser;
 }
